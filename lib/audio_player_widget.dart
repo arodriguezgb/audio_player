@@ -151,6 +151,8 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
                       setState(() => _seekSliderValue = val);
                       final double positionSeconds = val * _backgroundAudioDurationSeconds;
                       _backgroundAudio.seek(positionSeconds);
+                      AudioSystem.instance
+                          .setPlaybackState(true, positionSeconds);
                     },
                   ),
                 ),
@@ -328,8 +330,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
 
   Future<void> resumeBackgroundAudio() async {
     _backgroundAudio.resume();
-    _backgroundAudio.pause();
-    _backgroundAudio.resume();
+
     setState(() => _backgroundAudioPlaying = true);
 
     //final Uint8List imageBytes = await generateImageBytes();
@@ -337,7 +338,6 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
     http.Response response = await http.get(currentSong.album_art_url);
     final Uint8List imageBytes = response.bodyBytes;
 
-    print(_backgroundAudioDurationSeconds);
 
     AudioSystem.instance.setMetadata(AudioMetadata(
         title: currentSong.title,
