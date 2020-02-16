@@ -41,7 +41,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
 
 
   Audio _backgroundAudio;
-  bool _backgroundAudioPlaying;
+  bool _backgroundAudioPlaying = false;
   double _backgroundAudioDurationSeconds;
   double _backgroundAudioPositionSeconds = 0;
   bool _backgroundAudioLoading = false;
@@ -187,10 +187,10 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
       AudioSystem.instance
           .setPlaybackState(true, mediaEvent.seekToPositionSeconds);
     }
-    else if (type == MediaActionType.skipForward) {
+    else if (type == MediaActionType.next) {
       next();
     }
-    else if (type == MediaActionType.skipBackward) {
+    else if (type == MediaActionType.previous) {
       previous();
     }
     else if (type == MediaActionType.custom) {
@@ -208,15 +208,16 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
     currentSong = audioProfile;
     _backgroundAudioError = null;
     _backgroundAudioLoading = true;
-//    if(_backgroundAudio != null)
-//      _backgroundAudio.dispose();
-    AudioSystem.instance.stopBackgroundDisplay();
+
+    if(_backgroundAudio != null)
+      _backgroundAudio.dispose();
 
     _backgroundAudio = Audio.loadFromRemoteUrl( audioProfile.url,
         onDuration: (double durationSeconds) {
           setState(() {
             _backgroundAudioDurationSeconds = durationSeconds;
             _backgroundAudioLoading = false;
+            resumeBackgroundAudio();
           });
         },
         onPosition: (double positionSeconds) {
@@ -246,7 +247,6 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
       currentSong = audioProfile;
     });
 
-    resumeBackgroundAudio();
   }
   void next(){
     if (_currentIndex+1 < playList.length) {
@@ -328,12 +328,16 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
 
   Future<void> resumeBackgroundAudio() async {
     _backgroundAudio.resume();
+    _backgroundAudio.pause();
+    _backgroundAudio.resume();
     setState(() => _backgroundAudioPlaying = true);
 
     //final Uint8List imageBytes = await generateImageBytes();
 
     http.Response response = await http.get(currentSong.album_art_url);
     final Uint8List imageBytes = response.bodyBytes;
+
+    print(_backgroundAudioDurationSeconds);
 
     AudioSystem.instance.setMetadata(AudioMetadata(
         title: currentSong.title,
@@ -347,10 +351,10 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
         .setPlaybackState(true, _backgroundAudioPositionSeconds);
 
     AudioSystem.instance.setAndroidNotificationButtons(<dynamic>[
+      AndroidMediaButtonType.previous,
       AndroidMediaButtonType.pause,
       AndroidMediaButtonType.stop,
-      const AndroidCustomMediaButton(
-          'replay', replayButtonId, 'ic_replay_black_36dp')
+      AndroidMediaButtonType.next
     ], androidCompactIndices: <int>[
       0
     ]);
@@ -398,7 +402,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
       ),
       leading: Text(model.index.toString()),
       subtitle: Text(model.author),
-      trailing: index == _currentIndex ? new Image(image: new AssetImage("assets/nowplaying.gif"),) : null,
+      trailing: index == _currentIndex && _backgroundAudioPlaying ? new Image(image: new AssetImage("assets/nowplaying.gif"),) : null,
     );
   }
 }
