@@ -289,7 +289,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
       play(playList[index]);
 
       setState(() {
-        _currentIndex += index;
+        _currentIndex = index;
       });
 
     }
@@ -398,6 +398,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
       ),
       leading: Text(model.index.toString()),
       subtitle: Text(model.author),
+      trailing: index == _currentIndex ? new Image(image: new AssetImage("assets/nowplaying.gif"),) : null,
     );
   }
 }
