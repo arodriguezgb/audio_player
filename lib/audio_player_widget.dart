@@ -229,7 +229,11 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
           });
         },
         onComplete: (){
+          if(_currentIndex + 1 < playList.length)
           next();
+          else {
+              stopBackgroundAudio();
+          }
         },
         onError: (String message) => setState(() {
           _backgroundAudioError = message;
@@ -258,7 +262,6 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
       setState(() {
         _currentIndex += 1;
       });
-
     }
   }
   void previous(){
