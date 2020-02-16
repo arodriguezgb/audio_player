@@ -11,6 +11,8 @@ import 'package:http/http.dart' as http;
 
 final Logger _logger = Logger('audiofileplayer_example');
 
+GlobalKey<_AudioPlayerWidgetState> audioPlayerKey = GlobalKey();
+
 class AudioPlayerWidget extends StatefulWidget{
   AudioPlayerWidget({Key key, this.playlist, this.startIndex = 0}) : super(key: key);
 
@@ -71,8 +73,15 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-        body: Center(
+    var height = MediaQuery.of(context).size.height;
+
+    return ListView(
+      children: <Widget>[
+        Container(
+          height: height/ 1.8,
+          child: getChaptersWidgets(playList, context),
+        ),
+        Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
@@ -150,13 +159,14 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text('${_stringForSeconds(_backgroundAudioPositionSeconds) ?? ''} / ${_stringForSeconds(_backgroundAudioDurationSeconds)  ?? ''}',
-                      style: TextStyle(fontSize: 24.0),
+                    style: TextStyle(fontSize: 24.0),
                   ),
                 ],
               ),
             ],
           ),
         )
+      ],
     );
   }
   void _mediaEventListener(MediaEvent mediaEvent) {
@@ -272,6 +282,18 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
     _backgroundAudio.seek(positionSeconds);
   }
 
+  void playTrack(int index){
+    if (index < playList.length && index >= 0) {
+
+      stopBackgroundAudio();
+      play(playList[index]);
+
+      setState(() {
+        _currentIndex += index;
+      });
+
+    }
+  }
   void stopBackgroundAudio() {
     _backgroundAudio.pause();
     setState(() => _backgroundAudioPlaying = false);
@@ -343,5 +365,39 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
     }, skipIntervalSeconds: 30);
   }
 
+  Widget getChaptersWidgets(List<AudioProfile> chapters, context) {
+    return Scrollbar(
+        child : new ListView.builder(
+            itemCount: chapters.length,
+            itemBuilder: (BuildContext context, int index) {
+              AudioProfile item = chapters[index];
+              return makeCard(item, context, index);
+            }
+        )
+    );
+  }
 
+  Card makeCard(AudioProfile model, BuildContext context, int index) => Card(
+    elevation: 8.0,
+    margin: new EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
+    child: Container(
+      decoration: BoxDecoration(color: Color.fromRGBO(64, 75, 96, .9)),
+      child: _buildListItem(model: model, context: context, index:index),
+    ),
+  );
+
+  Widget _buildListItem({AudioProfile model, BuildContext context, int index}) {
+    return ListTile(
+      contentPadding:   EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+      title: GestureDetector(
+        onTap: (){
+          playTrack(index);
+        },
+        child: Text(model.title,
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),),
+      ),
+      leading: Text(model.index.toString()),
+      subtitle: Text(model.author),
+    );
+  }
 }
