@@ -219,6 +219,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
           setState(() {
             _backgroundAudioDurationSeconds = durationSeconds;
             _backgroundAudioLoading = false;
+            _backgroundAudioPositionSeconds = 0;
             resumeBackgroundAudio();
           });
         },
@@ -332,10 +333,6 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
   }
 
   Future<void> resumeBackgroundAudio() async {
-    _backgroundAudio.resume();
-
-    setState(() => _backgroundAudioPlaying = true);
-
     //final Uint8List imageBytes = await generateImageBytes();
 
     http.Response response = await http.get(currentSong.album_art_url);
@@ -350,8 +347,6 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
         durationSeconds: _backgroundAudioDurationSeconds,
         artBytes: imageBytes));
 
-    AudioSystem.instance
-        .setPlaybackState(true, _backgroundAudioPositionSeconds);
 
     AudioSystem.instance.setAndroidNotificationButtons(<dynamic>[
       AndroidMediaButtonType.previous,
@@ -370,6 +365,12 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
       MediaActionType.skipBackward,
       MediaActionType.seekTo,
     }, skipIntervalSeconds: 30);
+
+    _backgroundAudio.resume();
+    setState(() => _backgroundAudioPlaying = true);
+    AudioSystem.instance
+        .setPlaybackState(true, _backgroundAudioPositionSeconds);
+
   }
 
   Widget getChaptersWidgets(List<AudioProfile> chapters, context) {
